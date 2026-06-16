@@ -50,7 +50,15 @@ async def help_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 
 def build_app() -> Application:
-    app = Application.builder().token(TOKEN).build()
+    app = (
+        Application.builder()
+        .token(TOKEN)
+        .connect_timeout(30)
+        .read_timeout(30)
+        .get_updates_connect_timeout(30)
+        .get_updates_read_timeout(30)
+        .build()
+    )
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_cmd))
     return app
