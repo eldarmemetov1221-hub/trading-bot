@@ -49,13 +49,34 @@ async def help_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     )
 
 
-def main():
-    if not TOKEN:
-        print("❌ Set TELEGRAM_BOT_TOKEN in .env")
-        return
+def build_app() -> Application:
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_cmd))
+    return app
+
+
+async def start_bot() -> Application:
+    """Initialize and start polling without blocking; for embedding in another asyncio app."""
+    app = build_app()
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling(drop_pending_updates=True)
+    print("Bot started (polling)...")
+    return app
+
+
+async def stop_bot(app: Application):
+    await app.updater.stop()
+    await app.stop()
+    await app.shutdown()
+
+
+def main():
+    if not TOKEN:
+        print("Set TELEGRAM_BOT_TOKEN in .env")
+        return
+    app = build_app()
     print("Bot started...")
     app.run_polling(drop_pending_updates=True)
 

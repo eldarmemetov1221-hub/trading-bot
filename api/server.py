@@ -13,16 +13,22 @@ load_dotenv()
 
 from analysis import SignalGenerator, FOREX_PAIRS, CRYPTO_PAIRS
 from analysis.risk_management import RiskManager
+from bot.main import start_bot, stop_bot, TOKEN as BOT_TOKEN
 
 generator: SignalGenerator = None
 risk_mgr = RiskManager()
+bot_app = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global generator
+    global generator, bot_app
     generator = SignalGenerator()
+    if BOT_TOKEN:
+        bot_app = await start_bot()
     yield
+    if bot_app:
+        await stop_bot(bot_app)
     await generator.close()
 
 

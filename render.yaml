@@ -12,14 +12,6 @@ services:
         sync: false
       - key: TV_SESSION_SIGN
         sync: false
-
-  - type: worker
-    name: smc-trader-bot
-    runtime: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python bot/main.py
-    envVars:
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: WEBAPP_URL
