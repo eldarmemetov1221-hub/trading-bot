@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>SMC Trader Pro</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5b0" stroke-width="2.2" stroke-linecap="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">SMC Trader Pro</div>
+        <div class="logo-sub">Smart Money Concepts</div>
+      </div>
+    </div>
+    <div class="clock-block">
+      <div class="clock-time" id="clockTime">00:00:00</div>
+      <div class="clock-label">МСК</div>
+    </div>
+  </header>
+
+  <!-- SESSION BAR -->
+  <div class="session-bar" id="sessionBar">
+    <div class="sess-item" data-sess="asia">
+      <div class="sess-dot"></div>
+      <div class="sess-info">
+        <div class="sess-name">🌏 Азия</div>
+        <div class="sess-time">02:00–10:00</div>
+      </div>
+    </div>
+    <div class="sess-divider"></div>
+    <div class="sess-item" data-sess="london">
+      <div class="sess-dot"></div>
+      <div class="sess-info">
+        <div class="sess-name">🇬🇧 Лондон</div>
+        <div class="sess-time">10:00–19:00</div>
+      </div>
+    </div>
+    <div class="sess-divider"></div>
+    <div class="sess-item" data-sess="newyork">
+      <div class="sess-dot"></div>
+      <div class="sess-info">
+        <div class="sess-name">🇺🇸 Нью-Йорк</div>
+        <div class="sess-time">16:00–01:00</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TYPE SWITCH -->
+  <div class="type-switch">
+    <button class="type-btn active" data-type="crypto" onclick="switchType('crypto')">
+      <div class="type-icon">₿</div>
+      Криптовалюта
+    </button>
+    <button class="type-btn" data-type="forex" onclick="switchType('forex')">
+      <div class="type-icon">💱</div>
+      Форекс
+    </button>
+  </div>
+
+  <!-- SYMBOL GRID -->
+  <div class="section-header">
+    <div class="section-title">Инструмент</div>
+    <div class="symbol-count" id="symCount">— пар</div>
+  </div>
+  <div class="symbol-grid" id="symbolGrid"></div>
+
+  <!-- TIMEFRAME -->
+  <div class="section-header">
+    <div class="section-title">Таймфрейм входа</div>
+  </div>
+  <div class="tf-row">
+    <button class="tf-btn active" data-tf="1m"  onclick="selectTF('1m')">1M</button>
+    <button class="tf-btn"        data-tf="5m"  onclick="selectTF('5m')">5M</button>
+    <button class="tf-btn"        data-tf="15m" onclick="selectTF('15m')">15M</button>
+  </div>
+
+  <!-- HTF INFO -->
+  <div class="htf-bar">
+    <div class="htf-arrow">📊</div>
+    <div class="htf-text" id="htfText">Выберите инструмент и таймфрейм</div>
+  </div>
+
+  <!-- SIGNAL BUTTON -->
+  <button class="signal-btn" id="signalBtn" onclick="getSignal()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    </svg>
+    <span id="signalBtnText">ПОЛУЧИТЬ СИГНАЛ</span>
+    <div class="signal-btn-wave"></div>
+  </button>
+
+  <!-- RESULTS -->
+  <div id="signalResult" class="hidden"></div>
+  <div id="noSignal" class="no-signal hidden">
+    <div class="no-signal-icon">🔍</div>
+    <div class="no-signal-title">Сетап не найден</div>
+    <div class="no-signal-sub">Рынок не показывает чёткой SMC структуры.<br>Подождите формирования Order Block или FVG.</div>
+  </div>
+  <div id="confluencePanel" class="panel hidden">
+    <div class="panel-head">
+      <div class="panel-head-dot" style="background:#f59e0b"></div>
+      Confluences
+    </div>
+    <div class="panel-body" id="confList"></div>
+  </div>
+  <div id="riskPanel" class="panel hidden">
+    <div class="panel-head">
+      <div class="panel-head-dot" style="background:#6366f1"></div>
+      Риск-менеджмент
+    </div>
+    <div class="panel-body" id="riskGrid"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-banner">
+    <div class="fb-icon">📚</div>
+    <div>
+      <div class="fb-title">Smart Money Concepts</div>
+      <div class="fb-sub">Order Blocks · FVG · CHoCH · BOS · Liquidity Sweep</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- LOADING OVERLAY -->
+<div class="overlay hidden" id="overlay">
+  <div class="loader-card">
+    <div class="loader-rings">
+      <div class="loader-ring"></div>
+      <div class="loader-ring"></div>
+      <div class="loader-ring"></div>
+    </div>
+    <div class="loader-text" id="loaderText">Анализирую рынок…</div>
+    <div class="loader-sub" id="loaderSub">Ищу Order Blocks и FVG</div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

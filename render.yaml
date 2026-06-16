@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: smc-trader-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python api/server.py
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: TV_SESSION
+        sync: false
+      - key: TV_SESSION_SIGN
+        sync: false
+
+  - type: worker
+    name: smc-trader-bot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot/main.py
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: WEBAPP_URL
+        sync: false
