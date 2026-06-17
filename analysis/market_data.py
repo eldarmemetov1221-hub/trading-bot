@@ -229,7 +229,7 @@ class MarketDataFetcher:
 
         # 1) Try TradingView WebSocket
         df = await self.tv.get_ohlcv(tv_symbol, timeframe, limit)
-        if df is not None and len(df) >= 30:
+        if df is not None and len(df) >= min(30, limit):
             return df.tail(limit)
 
         # 2) Crypto: Binance fallback
@@ -245,7 +245,7 @@ class MarketDataFetcher:
             return await self._binance_ticker(symbol)
         # Forex — get last close from 1m bars
         try:
-            df = await self.get_ohlcv(symbol, "1m", 3)
+            df = await self.get_ohlcv(symbol, "1m", 10)
             price = float(df["close"].iloc[-1])
             prev  = float(df["close"].iloc[-2]) if len(df) > 1 else price
             return {
