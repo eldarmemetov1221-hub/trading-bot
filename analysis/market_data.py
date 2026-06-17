@@ -134,10 +134,11 @@ class TradingViewFeed:
                     chart_session, "s1", "s1", "sym_1", tf_code, bars
                 ]))
 
-                timeout_at = asyncio.get_event_loop().time() + 15
+                timeout_at = asyncio.get_event_loop().time() + 20
+                seen_ts = set()
                 while asyncio.get_event_loop().time() < timeout_at:
                     try:
-                        raw = await asyncio.wait_for(ws.recv(), timeout=8)
+                        raw = await asyncio.wait_for(ws.recv(), timeout=10)
                     except asyncio.TimeoutError:
                         break
 
@@ -150,11 +151,11 @@ class TradingViewFeed:
                             series = msg["p"][1].get("s1", {})
                             for bar in series.get("s", []):
                                 v = bar.get("v", [])
-                                if len(v) >= 5:
+                                if len(v) >= 5 and v[0] not in seen_ts:
+                                    seen_ts.add(v[0])
                                     collected.append(v)
-                            if collected:
-                                break
-                    if collected:
+                    # Stop once we have enough bars; otherwise keep waiting for more messages.
+                    if len(collected) >= bars:
                         break
 
         except Exception as e:
