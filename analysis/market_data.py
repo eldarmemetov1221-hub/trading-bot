@@ -157,10 +157,12 @@ class TradingViewFeed:
                     if collected:
                         break
 
-        except Exception:
+        except Exception as e:
+            print(f"[TV] get_ohlcv failed for {tv_symbol} {tf}: {type(e).__name__}: {e}")
             return None
 
         if not collected:
+            print(f"[TV] no bars collected for {tv_symbol} {tf} (auth_token={'cookie' if self._cookies else 'none'})")
             return None
 
         df = pd.DataFrame(collected, columns=["ts", "open", "high", "low", "close", "volume"])
@@ -266,33 +268,48 @@ class MarketDataFetcher:
         """aiohttp connector using ThreadedResolver (avoids aiodns sandbox issues)."""
         return aiohttp.TCPConnector(resolver=aiohttp.ThreadedResolver(), ssl=True)
 
+    @staticmethod
+    def _okx_inst(symbol: str) -> str:
+        """BTCUSDT -> BTC-USDT (OKX instrument id)."""
+        if symbol.endswith("USDT"):
+            return f"{symbol[:-4]}-USDT"
+        return symbol
+
     async def _binance_ohlcv(self, symbol: str, timeframe: str, limit: int) -> pd.DataFrame:
-        """Fetch OHLCV from Binance REST API directly (no ccxt)."""
-        url = "https://api.binance.com/api/v3/klines"
-        params = {"symbol": symbol, "interval": timeframe, "limit": limit}
+        """Fetch OHLCV from OKX REST API (Binance blocks US-hosted cloud IPs)."""
+        bar_map = {"1m": "1m", "5m": "5m", "15m": "15m", "1h": "1H", "4h": "4H", "1d": "1Dutc"}
+        url = "https://www.okx.com/api/v5/market/candles"
+        params = {"instId": self._okx_inst(symbol), "bar": bar_map.get(timeframe, "1m"), "limit": str(limit)}
         async with aiohttp.ClientSession(connector=self._aio_connector()) as s:
             async with s.get(url, params=params, timeout=aiohttp.ClientTimeout(total=15)) as r:
-                data = await r.json()
-        df = pd.DataFrame(data, columns=[
-            "timestamp","open","high","low","close","volume",
-            "close_time","qav","num_trades","tbbav","tbqav","ignore"
+                payload = await r.json()
+        rows = payload.get("data", [])
+        df = pd.DataFrame(rows, columns=[
+            "timestamp", "open", "high", "low", "close", "volume",
+            "volCcy", "volCcyQuote", "confirm",
         ])
         df["timestamp"] = pd.to_datetime(df["timestamp"].astype(float), unit="ms", utc=True)
-        df = df.set_index("timestamp")[["open","high","low","close","volume"]].astype(float)
-        return df
+        df = df.set_index("timestamp")[["open", "high", "low", "close", "volume"]].astype(float)
+        return df.sort_index()
 
     async def _binance_ticker(self, symbol: str) -> dict:
-        """Fetch 24h ticker from Binance REST."""
-        url = "https://api.binance.com/api/v3/ticker/24hr"
+        """Fetch 24h ticker from OKX REST."""
+        url = "https://www.okx.com/api/v5/market/ticker"
         async with aiohttp.ClientSession(connector=self._aio_connector()) as s:
-            async with s.get(url, params={"symbol": symbol}, timeout=aiohttp.ClientTimeout(total=10)) as r:
-                t = await r.json()
+            async with s.get(url, params={"instId": self._okx_inst(symbol)}, timeout=aiohttp.ClientTimeout(total=10)) as r:
+                payload = await r.json()
+        rows = payload.get("data", [])
+        if not rows:
+            return {"price": 0, "change_pct": 0, "high_24h": 0, "low_24h": 0, "volume": 0}
+        t = rows[0]
+        last = float(t.get("last", 0))
+        open24h = float(t.get("open24h", 0)) or last
         return {
-            "price":      float(t.get("lastPrice", 0)),
-            "change_pct": float(t.get("priceChangePercent", 0)),
-            "high_24h":   float(t.get("highPrice", 0)),
-            "low_24h":    float(t.get("lowPrice", 0)),
-            "volume":     float(t.get("volume", 0)),
+            "price":      last,
+            "change_pct": round((last - open24h) / open24h * 100, 4) if open24h else 0,
+            "high_24h":   float(t.get("high24h", 0)),
+            "low_24h":    float(t.get("low24h", 0)),
+            "volume":     float(t.get("vol24h", 0)),
         }
 
     async def _synthetic_forex(self, symbol: str, timeframe: str, limit: int) -> pd.DataFrame:
