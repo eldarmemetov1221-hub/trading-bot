@@ -210,6 +210,7 @@ function renderSignal(s) {
             ${dir}
             <span style="font-size:13px;font-weight:600;color:var(--text2);margin-left:4px">${pairFlag} ${pairFull}</span>
           </div>
+          ${s.current_price != null ? `<div style="font-size:12px;color:var(--text2);margin-top:2px">Текущая цена: <b style="color:var(--text1)">${s.current_price}</b></div>` : ''}
           <div class="conf-badge">
             <div class="conf-pct" style="color:${confClr}">${s.confidence}%</div>
             <div class="conf-label">уверен.</div>

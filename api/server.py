@@ -98,9 +98,14 @@ async def get_signal(symbol: str, timeframe: str):
             sl=signal.sl,
         )
         quality = risk_mgr.get_risk_label(signal.confidence)
+        try:
+            live_price = await generator.fetcher.get_current_price(symbol)
+        except Exception:
+            live_price = None
         return {
             "symbol": signal.symbol,
             "type": signal.signal_type.value,
+            "current_price": live_price.get("price") if live_price else None,
             "entry": signal.entry,
             "sl": signal.sl,
             "tp1": signal.tp1,
